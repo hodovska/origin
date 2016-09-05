@@ -1,0 +1,46 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata: 
+  name: node-problem-detector
+spec: 
+  template: 
+    metadata: 
+      labels: 
+        app: node-problem-detector
+    spec: 
+      containers: 
+        - 
+          command: 
+            - /node-problem-detector
+            - "--kernel-monitor=/config/kernel-monitor.json"
+          env: 
+            - 
+              name: NODE_NAME
+              valueFrom: 
+                fieldRef: 
+                  fieldPath: spec.nodeName
+          image: "gcr.io/google_containers/node-problem-detector:v0.2"
+          imagePullPolicy: Always
+          name: node-problem-detector
+          securityContext: 
+            privileged: true
+          volumeMounts: 
+            - 
+              mountPath: /log
+              name: log
+              readOnly: true
+            - 
+              mountPath: /config
+              name: config
+              readOnly: true
+      serviceAccountName: node-problem-detector-sa
+      volumes: 
+        - 
+          hostPath: 
+            path: /var/log/
+          name: log
+        - 
+          configMap: 
+            name: node-problem-detector-config
+          name: config
+
