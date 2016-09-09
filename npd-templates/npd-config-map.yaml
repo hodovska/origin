@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-problem-detector-config
+data:
+  kernel-monitor.json: |
+    {
+             "logPath": "/log/kern.log",
+              "bufferSize": 10,
+              "startPattern": "Initializing cgroup subsys cpuset",
+              "source": "kernel-monitor",
+              "conditions": [
+                    {
+                            "type": "KernelDeadlock",
+                            "reason": "KernelHasNoDeadlock",
+                            "message": "kernel has no deadlock"
+                    }
+            ],
+            "rules": [
+                    {
+                            "type": "temporary",
+                            "reason": "OOMKilling",
+                            "pattern": "Out of memory: Kill process \\d+ (.+) score \\d+ or sacrifice child\\nKilled process \\d+ (.+) total-vm:\\d+kB, anon-rss:\\d+kB, file-rss:\\d+kB"
+                    },
+                    {                             "type": "temporary",
+                            "reason": "TaskHung",
+                            "pattern": "task \\S+:\\w+ blocked for more than \\w+ seconds\\."
+                    },
+                    {
+                            "type": "temporary",
+                            "reason": "KernelPanic",
+                            "pattern": "traps: .+\\[\\d+\\] trap divide error ip:.+ sp:.+ error:0 in .+\\[\\d+\\+\\d+\\]"
+                    },
+                    {
+                            "type": "permanent",
+                            "condition": "KernelDeadlock",
+                            "reason": "DockerHung",
+                            "pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
+                    },
+                    {
+                            "type": "permanent",
+                            "condition": "KernelDeadlock",
+                            "reason": "UnregisterNetDeviceIssue",
+                            "pattern": "unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+"
+                    }
+            ]
+    }
